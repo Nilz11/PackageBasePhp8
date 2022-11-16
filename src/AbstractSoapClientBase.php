@@ -272,7 +272,16 @@ abstract class AbstractSoapClientBase implements SoapClientInterface
     public function setSoapHeader(string $namespace, string $name, $data, bool $mustUnderstand = false, ?string $actor = null): self
     {
         if ($this->getSoapClient()) {
-            $defaultHeaders = (isset($this->getSoapClient()->__default_headers) && is_array($this->getSoapClient()->__default_headers)) ? $this->getSoapClient()->__default_headers : [];
+
+            $reflectionProperty = new \ReflectionProperty(\SoapClient::class, '__default_headers');
+            $reflectionProperty->setAccessible(true);
+
+            $defaultHeaders = $reflectionProperty->getValue($this->getSoapClient());
+
+            if (!$defaultHeaders || !is_array($defaultHeaders)) {
+                $defaultHeaders = [];
+            }
+
             foreach ($defaultHeaders as $index => $soapHeader) {
                 if ($soapHeader->name === $name) {
                     unset($defaultHeaders[$index]);
